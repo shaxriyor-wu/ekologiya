@@ -36,6 +36,9 @@ __pycache__/
 db.sqlite3
 staticfiles/
 backend/media/
+.venv/
+venv/
+env/
 
 # OS
 Thumbs.db
