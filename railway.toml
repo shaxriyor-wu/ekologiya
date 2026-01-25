@@ -2,7 +2,7 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "npm run preview -- --port $PORT --host 0.0.0.0"
+startCommand = "npx serve dist -l $PORT -s"
 healthcheckPath = "/"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"

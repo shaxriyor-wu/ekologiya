@@ -1,0 +1,206 @@
+Your subscription is past due. Please pay the outstanding balance to avoid service disruption and continue using Railway.
+
+View Details
+
+
+trustworthy-enchantment
+
+production
+Architecture
+Observability
+Logs
+Settings
+
+
+
+
+
+
+
+
+
+
+
+
+ekologiya
+Deployments
+Variables
+Metrics
+Settings
+eco.examer.uz
+us-east4-eqdc4a
+1 Replica
+
+
+
+
+History
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ekologiya
+/
+b0542984
+Failed
+
+Jan 25, 2026, 10:43 PM GMT+5
+eco.examer.uz
+Get Help
+Details
+Build Logs
+Deploy Logs
+HTTP Logs
+Network Flow Logs
+Search build logs
+
+You reached the start of the range
+Jan 25, 2026, 10:38 PM
+ 
+[Region: us-east4]
+==============
+Using Nixpacks
+==============
+
+context: l5f7-uCmj
+╔══════════════════════ Nixpacks v1.38.0 ═════════════════════╗
+║ setup      │ nodejs_20                                      ║
+║─────────────────────────────────────────────────────────────║
+║ caddy      │ pkgs: caddy                                    ║
+║            │ cmds: caddy fmt --overwrite /assets/Caddyfile  ║
+║─────────────────────────────────────────────────────────────║
+║ install    │ npm ci                                         ║
+║─────────────────────────────────────────────────────────────║
+║ build      │ npm run build                                  ║
+║─────────────────────────────────────────────────────────────║
+║ start      │ npm run preview -- --port $PORT --host 0.0.0.0 ║
+╚═════════════════════════════════════════════════════════════╝
+
+internal
+load build definition from Dockerfile
+0ms
+
+internal
+load metadata for ghcr.io/railwayapp/nixpacks:ubuntu-1745885067
+77ms
+
+internal
+load .dockerignore
+0ms
+
+internal
+load build context
+0ms
+
+stage-0
+FROM ghcr.io/railwayapp/nixpacks:ubuntu-1745885067@sha256:d45c89d80e13d7ad0fd555b5130f22a866d9dd10e861f589932303ef2314c7de
+9ms
+
+stage-0
+WORKDIR /app/ cached
+0ms
+
+stage-0
+COPY .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix
+216ms
+
+stage-0
+RUN nix-env -if .nixpacks/nixpkgs-ba913eda2df8eb72147259189d55932012df6301.nix && nix-collect-garbage -d
+37s
+36 store paths deleted, 243.63 MiB freed
+
+stage-0
+COPY .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix
+79ms
+
+stage-0
+RUN nix-env -if .nixpacks/nixpkgs-ffeebf0acf3ae8b29f8c7049cd911b9636efd7e7.nix && nix-collect-garbage -d
+41s
+29 store paths deleted, 248.01 MiB freed
+
+stage-0
+COPY .nixpacks/assets /assets/
+65ms
+
+stage-0
+COPY . /app/.
+26ms
+
+stage-0
+RUN  caddy fmt --overwrite /assets/Caddyfile
+192ms
+
+stage-0
+COPY . /app/.
+24ms
+
+stage-0
+RUN npm ci
+5s
+found 0 vulnerabilities
+
+stage-0
+COPY . /app/.
+96ms
+
+stage-0
+RUN npm run build
+7s
+npm warn config production Use `--omit=dev` instead.
+> ecocash@1.0.0 build
+> tsc && vite build
+vite v6.4.1 building for production...
+/index.css doesn't exist at build time, it will remain unchanged to be resolved at runtime
+transforming...
+✓ 2457 modules transformed.
+✗ Build failed in 4.72s
+error during build:
+[vite:terser] terser not found. Since Vite v3, terser has become an optional dependency. You need to install it.
+    at loadTerserPath (file:///app/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:9752:13)
+    at Object.renderChunk (file:///app/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:9793:27)
+    at Object.handler (file:///app/node_modules/vite/dist/node/chunks/dep-D4NMHUTW.js:46558:15)
+    at file:///app/node_modules/rollup/dist/es/shared/node-entry.js:22527:40
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Dockerfile:30
+-------------------
+28 |     # build phase
+29 |     COPY . /app/.
+30 | >>> RUN --mount=type=cache,id=s/dc1ce4ad-3ab2-437b-892e-9acdf050cf6e-node_modules/cache,target=/app/node_modules/.cache npm run build
+31 |
+32 |
+-------------------
+ERROR: failed to build: failed to solve: process "/bin/bash -ol pipefail -c npm run build" did not complete successfully: exit code: 1
+Docker build failed
+You reached the end of the range
+Jan 25, 2026, 10:49 PM
+
+
+ekologiya | Railway
