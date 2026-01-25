@@ -147,30 +147,30 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden glass border-t border-slate-200 dark:border-white/10 absolute w-full left-0 px-4 py-6 space-y-4 shadow-2xl h-screen animate-page-enter">
-          <button onClick={() => handleNavClick('/')} className="block w-full text-left text-xl font-bold text-slate-600 dark:text-slate-300 hover:text-eco-500 py-3 border-b border-slate-100 dark:border-white/5">{t.home}</button>
-          <button onClick={() => handleNavClick('/security')} className="block w-full text-left text-xl font-bold text-slate-600 dark:text-slate-300 hover:text-eco-500 py-3 border-b border-slate-100 dark:border-white/5">{t.security}</button>
+        <div className="md:hidden bg-white dark:bg-slate-950 backdrop-blur-2xl border-t border-slate-200 dark:border-white/20 absolute w-full left-0 px-4 py-6 space-y-4 shadow-2xl h-screen animate-page-enter">
+          <button onClick={() => handleNavClick('/')} className="block w-full text-left text-xl font-bold text-slate-900 dark:text-white hover:text-eco-500 py-3 border-b border-slate-200 dark:border-white/10 transition-colors">{t.home}</button>
+          <button onClick={() => handleNavClick('/security')} className="block w-full text-left text-xl font-bold text-slate-900 dark:text-white hover:text-eco-500 py-3 border-b border-slate-200 dark:border-white/10 transition-colors">{t.security}</button>
           {user && (
             <>
-              <button onClick={() => handleNavClick('/dashboard')} className="block w-full text-left text-xl font-bold text-slate-600 dark:text-slate-300 hover:text-eco-500 py-3 border-b border-slate-100 dark:border-white/5">{t.dashboard}</button>
-              <button onClick={() => handleNavClick('/scanner')} className="block w-full text-left text-xl font-bold text-slate-600 dark:text-slate-300 hover:text-eco-500 py-3 border-b border-slate-100 dark:border-white/5">{t.scanner}</button>
+              <button onClick={() => handleNavClick('/dashboard')} className="block w-full text-left text-xl font-bold text-slate-900 dark:text-white hover:text-eco-500 py-3 border-b border-slate-200 dark:border-white/10 transition-colors">{t.dashboard}</button>
+              <button onClick={() => handleNavClick('/scanner')} className="block w-full text-left text-xl font-bold text-slate-900 dark:text-white hover:text-eco-500 py-3 border-b border-slate-200 dark:border-white/10 transition-colors">{t.scanner}</button>
             </>
           )}
           
-          <div className="pt-6 flex items-center justify-between">
+          <div className="pt-6 flex items-center justify-between border-t border-slate-200 dark:border-white/10 mt-4">
             <div className="flex gap-4">
-              <button onClick={() => {toggleTheme(); }} className="p-3 rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400">
+              <button onClick={() => {toggleTheme(); }} className="p-3 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/20 transition-colors">
                  {isDark ? <Sun size={24} /> : <Moon size={24} />}
               </button>
-              <button onClick={() => {toggleLang(lang === Language.UZ ? Language.EN : Language.UZ);}} className="p-3 rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 font-bold uppercase">
+              <button onClick={() => {toggleLang(lang === Language.UZ ? Language.EN : Language.UZ);}} className="p-3 rounded-full bg-slate-100 dark:bg-white/10 text-slate-700 dark:text-slate-200 font-bold uppercase hover:bg-slate-200 dark:hover:bg-white/20 transition-colors">
                  {lang}
               </button>
             </div>
             
             {!user ? (
-              <button onClick={() => handleNavClick('/login')} className="px-8 py-3 rounded-xl bg-eco-500 text-white font-bold">{t.login}</button>
+              <button onClick={() => handleNavClick('/login')} className="px-8 py-3 rounded-xl bg-eco-500 hover:bg-eco-600 text-white font-bold shadow-lg shadow-eco-500/30 transition-all">{t.login}</button>
             ) : (
-              <button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} className="px-8 py-3 rounded-xl bg-red-500/10 text-red-500 font-bold">Log out</button>
+              <button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} className="px-8 py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 font-bold border border-red-500/20 transition-colors">Log out</button>
             )}
           </div>
         </div>

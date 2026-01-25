@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Loader2, CheckCircle2, AlertCircle, Scan, Monitor, MapPin, ShieldAlert, XCircle } from 'lucide-react';
+import { Loader2, CheckCircle2, Scan, ShieldAlert, XCircle, FlipHorizontal } from 'lucide-react';
 import { analyzeWasteImage } from '../services/geminiService';
 import { AuthService } from '../services/authService';
 import { WasteAnalysisResult, Language } from '../types';
@@ -20,14 +20,14 @@ export const Scanner: React.FC<ScannerProps> = ({ lang }) => {
   const [result, setResult] = useState<WasteAnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  // Device & Location State
+  // Device & Camera State
   const [isMobile, setIsMobile] = useState(false);
-  const [locationCoords, setLocationCoords] = useState<GeolocationPosition | null>(null);
-  const [locationError, setLocationError] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment'); // 'user' = front, 'environment' = back
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
 
   // 1. Detect Device on Mount
   useEffect(() => {
@@ -39,12 +39,18 @@ export const Scanner: React.FC<ScannerProps> = ({ lang }) => {
   const startCamera = async () => {
     if (!videoRef.current) return;
     try {
+      // Stop previous stream if exists
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+      
       // Desktop va Mobile uchun real camera
       const constraints: MediaStreamConstraints = isMobile 
-        ? { video: { facingMode: 'environment' } } // Mobile: rear camera
+        ? { video: { facingMode: facingMode } } // Mobile: front or rear camera
         : { video: true }; // Desktop: default camera (real camera)
       
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      streamRef.current = stream;
       videoRef.current.srcObject = stream;
       videoRef.current.play();
     } catch (err) {
@@ -53,31 +59,13 @@ export const Scanner: React.FC<ScannerProps> = ({ lang }) => {
     }
   };
 
-  // 3. Get Location (Required for Mobile)
-  const getLocation = () => {
-    if (!navigator.geolocation) {
-      setLocationError("Geolokatsiya bu qurilmada ishlamaydi.");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLocationCoords(position);
-        setLocationError(null);
-      },
-      (err) => {
-        setLocationError("Joylashuvni aniqlash uchun ruxsat bering (GPS).");
-      }
-    );
+  // Switch camera (front/back)
+  const switchCamera = () => {
+    setFacingMode(prev => prev === 'environment' ? 'user' : 'environment');
   };
 
   // Capture Photo from Video Stream (Real Camera)
   const capturePhoto = () => {
-    if (!locationCoords && isMobile) {
-      setError("Iltimos, avval GPS joylashuvga ruxsat bering!");
-      getLocation();
-      return;
-    }
-
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
@@ -160,19 +148,14 @@ export const Scanner: React.FC<ScannerProps> = ({ lang }) => {
     if (!image) {
       // Desktop va Mobile uchun real camera ochish
       startCamera();
-      // Mobile uchun GPS
-      if (isMobile) {
-        getLocation();
-      }
     }
     return () => {
       // Cleanup camera stream
-      if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach(track => track.stop());
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
       }
     };
-  }, [image]);
+  }, [image, facingMode, isMobile]);
 
   const triggerDesktopInput = () => fileInputRef.current?.click();
 
@@ -184,11 +167,6 @@ export const Scanner: React.FC<ScannerProps> = ({ lang }) => {
            <div className={`px-2 sm:px-3 py-1 rounded-full text-xs font-bold border ${isMobile ? 'bg-eco-500/10 border-eco-500 text-eco-500' : 'bg-blue-500/10 border-blue-500 text-blue-500'}`}>
              {isMobile ? "Mobil Rejim (Real Camera)" : "Kompyuter Rejimi (Real Camera)"}
            </div>
-           {isMobile && (
-             <div className={`px-2 sm:px-3 py-1 rounded-full text-xs font-bold border ${locationCoords ? 'bg-green-500/10 border-green-500 text-green-500' : 'bg-red-500/10 border-red-500 text-red-500'}`}>
-               {locationCoords ? "GPS Ulangan" : "GPS Kutilmoqda..."}
-             </div>
-           )}
         </div>
       </div>
 
@@ -240,23 +218,26 @@ export const Scanner: React.FC<ScannerProps> = ({ lang }) => {
              />
              <canvas ref={canvasRef} className="hidden" />
              
+             {/* Camera Switch Button */}
+             <div className="absolute top-4 right-4 z-30">
+                <button 
+                  onClick={switchCamera}
+                  className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/50 flex items-center justify-center transition-transform active:scale-95 hover:scale-105"
+                  title={facingMode === 'environment' ? "Old kameraga o'tish" : "Orqa kameraga o'tish"}
+                >
+                  <FlipHorizontal className="text-white" size={24} />
+                </button>
+             </div>
+             
              {/* Camera Trigger */}
              <div className="absolute bottom-4 sm:bottom-8 left-0 w-full flex justify-center z-30">
                 <button 
                   onClick={capturePhoto}
-                  disabled={!locationCoords && isMobile}
-                  className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white flex items-center justify-center transition-transform active:scale-95 ${(!locationCoords && isMobile) ? 'opacity-50 grayscale' : 'bg-white/20 backdrop-blur-sm hover:scale-105'}`}
+                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-4 border-white flex items-center justify-center transition-transform active:scale-95 bg-white/20 backdrop-blur-sm hover:scale-105"
                 >
                   <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white rounded-full"></div>
                 </button>
              </div>
-             
-             {!locationCoords && (
-               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/70 px-6 py-3 rounded-full flex items-center gap-2">
-                 <Loader2 className="animate-spin text-white" />
-                 <span className="text-white text-xs font-bold">GPS aniqlanmoqda...</span>
-               </div>
-             )}
           </div>
         )}
 
@@ -272,7 +253,7 @@ export const Scanner: React.FC<ScannerProps> = ({ lang }) => {
                   <Scan className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-eco-400" size={32} />
                 </div>
                 <p className="text-eco-400 font-mono mt-6 animate-pulse font-bold text-lg">SUPER FILTER: Checking Fraud...</p>
-                <p className="text-slate-500 text-xs mt-2">AI Authenticity & GPS Check</p>
+                <p className="text-slate-500 text-xs mt-2">AI Authenticity Check</p>
               </div>
             )}
           </div>
@@ -305,13 +286,6 @@ export const Scanner: React.FC<ScannerProps> = ({ lang }) => {
             <p className={`text-sm mb-6 p-3 rounded-lg border italic ${result.isRecyclable ? 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-300' : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-300'}`}>
               "{result.explanation}"
             </p>
-            
-            <div className="flex items-center gap-2 text-xs text-slate-400 mb-4">
-               <MapPin size={12} />
-               {locationCoords 
-                 ? `GPS: ${locationCoords.coords.latitude.toFixed(4)}, ${locationCoords.coords.longitude.toFixed(4)}`
-                 : "Manzil aniqlanmagan (Desktop)"}
-            </div>
 
             {result.isRecyclable ? (
                <button 
