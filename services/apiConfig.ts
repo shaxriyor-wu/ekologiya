@@ -7,9 +7,9 @@ const getApiBaseUrl = (): string => {
     return import.meta.env.VITE_API_URL;
   }
   
-  // Development fallback
+  // Development fallback - use proxy in dev mode
   if (import.meta.env.DEV) {
-    return 'http://127.0.0.1:8000/api';
+    return '/api'; // Use Vite proxy to avoid CORS and HTTPS issues
   }
   
   // Production fallback - try to detect Railway backend
@@ -18,6 +18,10 @@ const getApiBaseUrl = (): string => {
     console.warn('VITE_API_URL not set! Please set it in Railway environment variables.');
   }
   
+  // Fallback - try proxy first, then direct URL
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return '/api';
+  }
   return 'http://127.0.0.1:8000/api';
 };
 

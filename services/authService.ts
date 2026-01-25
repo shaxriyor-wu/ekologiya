@@ -1,4 +1,4 @@
-import { User, Transaction, GlobalStats, CreditCard } from "../types";
+import { User, Transaction, GlobalStats } from "../types";
 import { apiRequest } from "./apiConfig";
 
 // Helper to convert Django user to frontend User format
@@ -11,8 +11,7 @@ function convertDjangoUser(djangoUser: any): User {
     totalRecycledKg: parseFloat(djangoUser.total_recycled_kg),
     level: djangoUser.level,
     joinDate: djangoUser.join_date,
-    role: djangoUser.role || 'user',
-    cards: djangoUser.cards || []
+    role: djangoUser.role || 'user'
   };
 }
 

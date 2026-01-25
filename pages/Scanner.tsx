@@ -147,7 +147,7 @@ export const Scanner: React.FC<ScannerProps> = ({ lang }) => {
 
   const handleClaim = async () => {
     if (result && result.isAuthentic) {
-      const user = AuthService.getCurrentUser();
+      const user = await AuthService.getCurrentUser();
       if (user) {
         await AuthService.updateStats(user.id, result.ecoValue, result.weightEstimateKg);
         navigate('/dashboard');

@@ -151,7 +151,6 @@ export const Login: React.FC<LoginProps> = ({ lang, onLogin }) => {
           
           // Save credentials for auto-login
           localStorage.setItem('ecocash_credentials', JSON.stringify({
-            username: user.username || loginId,
             email: user.email || loginId,
             password: formData.password
           }));
