@@ -267,11 +267,8 @@ export const AuthService = {
   // Update user stats after recycling
   updateStats: async (userId: string, addedBalance: number, addedKg: number): Promise<User> => {
     try {
-      // Use me endpoint to get current user ID, then update stats
-      const meResponse = await apiRequest('/users/me/');
-      const currentUser = await meResponse.json();
-      
-      const response = await apiRequest(`/users/${currentUser.id}/update_stats/`, {
+      // To'g'ridan-to'g'ri userId ishlatish — /me/ ga murojaat qilmaslik (403 beradi)
+      const response = await apiRequest(`/users/${userId}/update_stats/`, {
         method: 'POST',
         body: JSON.stringify({
           added_balance: addedBalance,
@@ -281,10 +278,10 @@ export const AuthService = {
 
       const djangoUser = await response.json();
       const user = convertDjangoUser(djangoUser);
-      
+
       // Update localStorage
       localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
-      
+
       return user;
     } catch (error: any) {
       console.error('Update stats error:', error);
