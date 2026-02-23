@@ -464,39 +464,54 @@ EcoCash Jamoasi
     @action(detail=True, methods=['post'], permission_classes=[AllowAny])  # Temporarily AllowAny
     def update_stats(self, request, pk=None):
         """Update user stats after recycling"""
-        # Try to get user from session, fallback to pk
-        if request.user.is_authenticated:
-            user = request.user
-        elif pk:
+        from decimal import Decimal, InvalidOperation
+
+        try:
+            # Try to get user from session, fallback to pk
+            if request.user.is_authenticated:
+                user = request.user
+            elif pk:
+                try:
+                    user = User.objects.get(pk=pk)
+                except User.DoesNotExist:
+                    return Response({'error': 'Foydalanuvchi topilmadi'}, status=status.HTTP_404_NOT_FOUND)
+            else:
+                return Response({'error': 'Foydalanuvchi talab qilinadi'}, status=status.HTTP_401_UNAUTHORIZED)
+
+            # Decimal ga o'tkazish — float + Decimal TypeError beradi
             try:
-                user = User.objects.get(pk=pk)
-            except User.DoesNotExist:
-                return Response({'error': 'Foydalanuvchi topilmadi'}, status=status.HTTP_404_NOT_FOUND)
-        else:
-            return Response({'error': 'Foydalanuvchi talab qilinadi'}, status=status.HTTP_401_UNAUTHORIZED)
-        added_balance = float(request.data.get('added_balance', 0))
-        added_kg = float(request.data.get('added_kg', 0))
-        
-        with transaction.atomic():
-            user.balance += added_balance
-            user.total_recycled_kg += added_kg
-            
-            # Level up logic
-            if user.total_recycled_kg > user.level * 50:
-                user.level += 1
-            
-            user.save()
-            
-            # Create transaction record
-            Transaction.objects.create(
-                user=user,
-                amount=added_balance,
-                type='earn',
-                description=f'Qayta ishlash: {added_kg}kg',
-                provider='AI Scanner'
-            )
-        
-        return Response(UserSerializer(user).data)
+                added_balance = Decimal(str(request.data.get('added_balance', 0)))
+                added_kg = Decimal(str(request.data.get('added_kg', 0)))
+            except (InvalidOperation, ValueError, TypeError):
+                return Response({'error': 'Noto\'g\'ri qiymatlar yuborildi'}, status=status.HTTP_400_BAD_REQUEST)
+
+            if added_balance < 0 or added_kg < 0:
+                return Response({'error': 'Manfiy qiymatlar qabul qilinmaydi'}, status=status.HTTP_400_BAD_REQUEST)
+
+            with transaction.atomic():
+                user.balance += added_balance
+                user.total_recycled_kg += added_kg
+
+                # Level up logic
+                if user.total_recycled_kg > user.level * 50:
+                    user.level += 1
+
+                user.save()
+
+                # Create transaction record
+                Transaction.objects.create(
+                    user=user,
+                    amount=added_balance,
+                    type='earn',
+                    description=f'Qayta ishlash: {added_kg}kg',
+                    provider='AI Scanner'
+                )
+
+            return Response(UserSerializer(user).data)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return Response({'error': f'Server xatosi: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     @action(detail=True, methods=['post'], permission_classes=[AllowAny])  # Temporarily AllowAny
     def pay_utility(self, request, pk=None):

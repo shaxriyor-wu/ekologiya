@@ -139,8 +139,15 @@ export const Scanner: React.FC<ScannerProps> = ({ lang }) => {
       const stored = localStorage.getItem('ecocash_current_user');
       const user = stored ? JSON.parse(stored) : null;
       if (user) {
-        await AuthService.updateStats(user.id, result.ecoValue, result.weightEstimateKg);
-        navigate('/dashboard');
+        try {
+          setLoading(true);
+          await AuthService.updateStats(user.id, result.ecoValue, result.weightEstimateKg);
+          navigate('/dashboard');
+        } catch (err: any) {
+          setError(err.message || 'Tangalarni olishda xatolik yuz berdi');
+        } finally {
+          setLoading(false);
+        }
       }
     }
   };
