@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Hexagon, ArrowRight, Lock, Mail, User as UserIcon, MapPin } from 'lucide-react';
+import { Hexagon, ArrowRight, Lock, User as UserIcon, MapPin, Phone, Eye, EyeOff } from 'lucide-react';
 import { Language } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { AuthService } from '../services/authService';
@@ -16,14 +16,15 @@ interface LoginProps {
 export const Login: React.FC<LoginProps> = ({ lang, onLogin }) => {
   const t = TRANSLATIONS[lang].auth;
   const navigate = useNavigate();
-  
+
   const [isRegister, setIsRegister] = useState(true); // true = register, false = login
-  const [formData, setFormData] = useState({ username: '', email: '', password: '', first_name: '', last_name: '', region: '', district: '' });
+  const [formData, setFormData] = useState({ username: '', email: '', password: '', first_name: '', last_name: '', phone: '', region: '', district: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [checkingAutoLogin, setCheckingAutoLogin] = useState(true);
   const [toasts, setToasts] = useState<Array<{ id: string; message: string; type: ToastType }>>([]);
   const [confettiTrigger, setConfettiTrigger] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const showToast = (message: string, type: ToastType) => {
     const id = Date.now().toString();
@@ -34,6 +35,25 @@ export const Login: React.FC<LoginProps> = ({ lang, onLogin }) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
+  // Telefon raqam formatlash: xx-xxx-xx-xx
+  const formatPhone = (value: string) => {
+    // Faqat raqamlarni qoldirish
+    const digits = value.replace(/\D/g, '');
+    // 9 ta raqamgacha (998 dan keyin)
+    const limited = digits.slice(0, 9);
+    // xx-xxx-xx-xx formatida chiqarish
+    let formatted = '';
+    if (limited.length > 0) formatted += limited.slice(0, 2);
+    if (limited.length > 2) formatted += '-' + limited.slice(2, 5);
+    if (limited.length > 5) formatted += '-' + limited.slice(5, 7);
+    if (limited.length > 7) formatted += '-' + limited.slice(7, 9);
+    return formatted;
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhone(e.target.value);
+    setFormData({ ...formData, phone: formatted });
+  };
 
   // Auto-login check on mount
   useEffect(() => {
@@ -41,7 +61,7 @@ export const Login: React.FC<LoginProps> = ({ lang, onLogin }) => {
       try {
         const savedUser = localStorage.getItem('ecocash_current_user');
         const savedCredentials = localStorage.getItem('ecocash_credentials');
-        
+
         if (savedUser && savedCredentials) {
           const credentials = JSON.parse(savedCredentials);
           try {
@@ -60,7 +80,7 @@ export const Login: React.FC<LoginProps> = ({ lang, onLogin }) => {
         setCheckingAutoLogin(false);
       }
     };
-    
+
     checkAutoLogin();
   }, [navigate, onLogin]);
 
@@ -71,14 +91,14 @@ export const Login: React.FC<LoginProps> = ({ lang, onLogin }) => {
 
     try {
       if (isRegister) {
-        // Register new user - ism, familya, email va parol
-        if (!formData.email) {
-          setError('Email kiriting');
-          showToast('Email kiriting', 'error');
+        // Telefon raqam tekshirish
+        if (!formData.phone || formData.phone.replace(/\D/g, '').length < 9) {
+          setError('Telefon raqam kiriting (xx-xxx-xx-xx)');
+          showToast('Telefon raqam kiriting', 'error');
           setLoading(false);
           return;
         }
-        
+
         if (!formData.password || formData.password.length < 6) {
           setError('Parol kamida 6 belgi bo\'lishi kerak');
           showToast('Parol kamida 6 belgi bo\'lishi kerak', 'error');
@@ -86,50 +106,29 @@ export const Login: React.FC<LoginProps> = ({ lang, onLogin }) => {
           return;
         }
 
-        // Emailni tekshirish - email mavjud bo'lsa, login qilishni taklif qilish
-        try {
-          const emailCheck = await AuthService.checkEmail(formData.email.trim().toLowerCase());
-          if (emailCheck.exists) {
-            setError('Bu email bilan hisob mavjud. Username va parol bilan kirishingiz mumkin.');
-            showToast('Bu email bilan hisob mavjud. Login qiling.', 'error');
-            setLoading(false);
-            // Login formiga o'tish
-            setIsRegister(false);
-            setFormData({
-              username: '',
-              email: formData.email,
-              password: '',
-              first_name: '',
-              last_name: '',
-              region: '',
-              district: ''
-            });
-            return;
-          }
-        } catch (checkError: any) {
-          // Email tekshirishda xatolik bo'lsa ham, ro'yxatdan o'tishga ruxsat berish
-          console.warn('Email tekshirishda xatolik:', checkError);
-        }
+        // Telefon raqamdan email yaratish (backend uchun)
+        const phoneDigits = formData.phone.replace(/\D/g, '');
+        const generatedEmail = `998${phoneDigits}@ecocash.uz`;
 
-        // Username yaratish (email'dan)
-        const username = formData.username || formData.email.split('@')[0];
-        
+        // Username yaratish (telefon raqamdan)
+        const username = `user998${phoneDigits}`;
+
         const user = await AuthService.register(
           username,
           formData.password,
           formData.first_name,
           formData.last_name,
-          formData.email,
+          generatedEmail,
           formData.region || undefined,
           formData.district || undefined
         );
-        
+
         // Save credentials for auto-login
         localStorage.setItem('ecocash_credentials', JSON.stringify({
           email: user.email,
           password: formData.password
         }));
-        
+
         onLogin(user);
         showToast('Hisob muvaffaqiyatli yaratildi!', 'success');
         setConfettiTrigger(true);
@@ -143,23 +142,23 @@ export const Login: React.FC<LoginProps> = ({ lang, onLogin }) => {
           setLoading(false);
           return;
         }
-        
+
         if (!formData.password || !formData.password.trim()) {
           setError('Parol kiriting');
           showToast('Parol kiriting', 'error');
           setLoading(false);
           return;
         }
-        
+
         try {
           const user = await AuthService.login(loginId.trim(), formData.password);
-          
+
           // Save credentials for auto-login
           localStorage.setItem('ecocash_credentials', JSON.stringify({
             email: user.email || loginId,
             password: formData.password
           }));
-          
+
           onLogin(user);
           showToast('Muvaffaqiyatli kirdingiz!', 'success');
           setConfettiTrigger(true);
@@ -176,7 +175,7 @@ export const Login: React.FC<LoginProps> = ({ lang, onLogin }) => {
       // Xatolikni yaxshiroq ko'rsatish
       let errorMessage = err.message || (isRegister ? "Ro'yxatdan o'tishda xatolik" : "Kirishda xatolik");
       showToast(errorMessage, 'error');
-      
+
       // Agar JSON xatolik bo'lsa, uni parse qilish
       try {
         if (err.message && err.message.includes('{')) {
@@ -192,7 +191,7 @@ export const Login: React.FC<LoginProps> = ({ lang, onLogin }) => {
       } catch (e) {
         // JSON parse qilishda xatolik bo'lsa, oddiy xabarni ko'rsatish
       }
-      
+
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -214,7 +213,7 @@ export const Login: React.FC<LoginProps> = ({ lang, onLogin }) => {
     <div className="min-h-screen pt-20 flex items-center justify-center px-4 relative overflow-hidden">
       <ToastContainer toasts={toasts} removeToast={removeToast} />
       <Confetti trigger={confettiTrigger} onComplete={() => setConfettiTrigger(false)} />
-      
+
       {/* Background Ambience */}
       <div className="absolute top-0 left-0 w-full h-full">
          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-eco-500/10 rounded-full blur-[100px]"></div>
@@ -257,29 +256,45 @@ export const Login: React.FC<LoginProps> = ({ lang, onLogin }) => {
               />
             </div>
 
+            {/* Telefon raqam — +998 fixed prefix */}
             <div className="relative group">
-              <Mail className="absolute left-4 top-3.5 text-slate-500 group-focus-within:text-eco-400 transition-colors" size={20} />
-              <input
-                type="email"
-                placeholder="Gmail"
-                required
-                className="w-full bg-slate-950/50 border border-slate-700 rounded-xl px-12 py-3.5 text-white focus:outline-none focus:border-eco-500 transition-colors"
-                value={formData.email}
-                onChange={e => setFormData({...formData, email: e.target.value})}
-              />
+              <Phone className="absolute left-4 top-3.5 text-slate-500 group-focus-within:text-eco-400 transition-colors" size={20} />
+              <div className="flex w-full bg-slate-950/50 border border-slate-700 rounded-xl focus-within:border-eco-500 transition-colors overflow-hidden">
+                <span className="pl-12 pr-2 py-3.5 text-slate-400 text-sm font-mono whitespace-nowrap select-none">
+                  +998
+                </span>
+                <input
+                  type="tel"
+                  placeholder="xx-xxx-xx-xx"
+                  required
+                  inputMode="numeric"
+                  className="flex-1 bg-transparent pr-4 py-3.5 text-white focus:outline-none font-mono tracking-wider"
+                  value={formData.phone}
+                  onChange={handlePhoneChange}
+                />
+              </div>
             </div>
 
+            {/* Parol — ko'rish tugmasi bilan */}
             <div className="relative group">
               <Lock className="absolute left-4 top-3.5 text-slate-500 group-focus-within:text-eco-400 transition-colors" size={20} />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 placeholder={t.password}
                 required
                 minLength={6}
-                className="w-full bg-slate-950/50 border border-slate-700 rounded-xl px-12 py-3.5 text-white focus:outline-none focus:border-eco-500 transition-colors"
+                className="w-full bg-slate-950/50 border border-slate-700 rounded-xl pl-12 pr-12 py-3.5 text-white focus:outline-none focus:border-eco-500 transition-colors"
                 value={formData.password}
                 onChange={e => setFormData({...formData, password: e.target.value})}
               />
+              <button
+                type="button"
+                tabIndex={-1}
+                className="absolute right-4 top-3.5 text-slate-500 hover:text-slate-300 transition-colors"
+                onClick={() => setShowPassword(p => !p)}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
 
             <div className="relative group">
@@ -352,16 +367,25 @@ export const Login: React.FC<LoginProps> = ({ lang, onLogin }) => {
               />
             </div>
 
+            {/* Parol — ko'rish tugmasi bilan */}
             <div className="relative group">
               <Lock className="absolute left-4 top-3.5 text-slate-500 group-focus-within:text-eco-400 transition-colors" size={20} />
               <input
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 placeholder={t.password}
                 required
-                className="w-full bg-slate-950/50 border border-slate-700 rounded-xl px-12 py-3.5 text-white focus:outline-none focus:border-eco-500 transition-colors"
+                className="w-full bg-slate-950/50 border border-slate-700 rounded-xl pl-12 pr-12 py-3.5 text-white focus:outline-none focus:border-eco-500 transition-colors"
                 value={formData.password}
                 onChange={e => setFormData({...formData, password: e.target.value})}
               />
+              <button
+                type="button"
+                tabIndex={-1}
+                className="absolute right-4 top-3.5 text-slate-500 hover:text-slate-300 transition-colors"
+                onClick={() => setShowPassword(p => !p)}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
 
             {error && <p className="text-red-400 text-sm text-center">{error}</p>}
@@ -384,11 +408,12 @@ export const Login: React.FC<LoginProps> = ({ lang, onLogin }) => {
         )}
 
         <div className="mt-8 text-center">
-          <button 
+          <button
             onClick={() => {
               setIsRegister(!isRegister);
               setError('');
-              setFormData({ username: '', email: '', password: '', first_name: '', last_name: '', region: '', district: '' }); // Reset form when switching
+              setShowPassword(false);
+              setFormData({ username: '', email: '', password: '', first_name: '', last_name: '', phone: '', region: '', district: '' }); // Reset form when switching
             }}
             className="text-slate-400 hover:text-white text-sm font-medium transition-colors"
           >
