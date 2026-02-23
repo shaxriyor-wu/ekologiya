@@ -135,7 +135,9 @@ export const Scanner: React.FC<ScannerProps> = ({ lang }) => {
 
   const handleClaim = async () => {
     if (result && result.isAuthentic) {
-      const user = await AuthService.getCurrentUser();
+      // localStorage dan user olish (403 muammosini hal qiladi)
+      const stored = localStorage.getItem('ecocash_current_user');
+      const user = stored ? JSON.parse(stored) : null;
       if (user) {
         await AuthService.updateStats(user.id, result.ecoValue, result.weightEstimateKg);
         navigate('/dashboard');
@@ -278,8 +280,9 @@ export const Scanner: React.FC<ScannerProps> = ({ lang }) => {
               <div className="text-right">
                 <p className="text-xs text-slate-500 uppercase tracking-wider">Hisoblangan Qiymat</p>
                 <p className={`text-2xl font-display font-bold ${result.ecoValue > 0 ? 'text-eco-500' : 'text-slate-600'}`}>
-                  {result.ecoValue > 0 ? `+${result.ecoValue}` : '0'} UZS
+                  {result.ecoValue > 0 ? `+${result.ecoValue}` : '0'} EC
                 </p>
+                <p className="text-xs text-slate-400 mt-0.5">≈ {result.ecoValue * 100} UZS</p>
               </div>
             </div>
             

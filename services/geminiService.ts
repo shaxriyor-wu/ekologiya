@@ -45,12 +45,21 @@ QOIDALAR:
 2. Agar rasmda chiqindi bo'lmasa (xona, tabiat, kompyuter va h.k.):
    - isRecyclable: false
    - explanation: "Chiqindi topilmadi."
+   - ecoValue: 0
 
-3. Agar chiqindi bo'lsa (plastik, shisha, qog'oz, temir, elektron):
-   - material: chiqindi turi
-   - weightEstimateKg: taxminiy og'irlik (kg)
+3. Agar chiqindi bo'lsa, chiqindi turiga qarab EcoCoin (EC) hisoblaydi (1 EC = 100 UZS):
+   - material: chiqindi turi (o'zbek tilida)
+   - weightEstimateKg: taxminiy og'irlik (kg), odatda bitta narsa uchun 0.05 - 2.0 kg
    - isRecyclable: true
-   - Har 1 kg = 5000 UZS
+   - ecoValue: EcoCoin miqdori (butun son), quyidagi narxlar bo'yicha:
+     * Qog'oz, karton: 2 EC/kg (bitta varoq ≈ 0.005 kg → 0 EC, dasta qog'oz ≈ 0.5 kg → 1 EC)
+     * Plastik (shisha, idish): 5 EC/kg
+     * Shisha (butilka, banka): 3 EC/kg
+     * Metall (temir, alyuminiy): 10 EC/kg
+     * Elektron chiqindi: 20 EC/kg
+     * Organik chiqindi: 1 EC/kg
+     * Maishiy chiqindi (aralash): 2 EC/kg
+   MUHIM: ecoValue MINIMAL 1, MAKSIMAL 50 EC bo'lsin. Bitta oddiygina narsa uchun hech qachon 10+ EC berma.
 
 Faqat JSON formatda javob ber:
 {
@@ -83,8 +92,10 @@ Faqat JSON formatda javob ber:
 
     const parsed = JSON.parse(content);
 
+    // AI bergan ecoValue ni ishlatish, lekin MAX 50 EC, MIN 1 EC
+    const aiEcoValue = parsed.isRecyclable ? Math.round(parsed.ecoValue || 0) : 0;
     const calculatedValue = parsed.isRecyclable
-      ? Math.ceil(parsed.weightEstimateKg * 5000)
+      ? Math.max(1, Math.min(50, aiEcoValue))
       : 0;
 
     return {
