@@ -3,7 +3,7 @@ import { WasteAnalysisResult } from "../types";
 
 // OpenAI API kaliti - environment variable'dan olinadi
 const getOpenAIKey = (): string => {
-  const key = import.meta.env.VITE_OPENAI_API_KEY;
+  const key = import.meta.env.VITE_OPENAI_API_KEY || import.meta.env.VITE_OPENAI_KEY;
   if (!key) {
     console.warn('[OpenAI] API key topilmadi. VITE_OPENAI_API_KEY environment variable sozlang.');
   }
