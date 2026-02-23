@@ -11,8 +11,9 @@ class UserSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'name', 'balance', 
-                  'total_recycled_kg', 'totalRecycledKg', 'level', 'join_date', 'joinDate', 'role']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'name', 'balance',
+                  'total_recycled_kg', 'totalRecycledKg', 'level', 'join_date', 'joinDate', 'role',
+                  'region', 'district']
         read_only_fields = ['id', 'balance', 'total_recycled_kg', 'totalRecycledKg', 'level', 'join_date', 'joinDate']
     
     def get_name(self, obj):
@@ -46,9 +47,12 @@ class RegisterSerializer(serializers.ModelSerializer):
     password_confirm = serializers.CharField(write_only=True, min_length=6)
     email = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     
+    region = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    district = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+
     class Meta:
         model = User
-        fields = ['username', 'email', 'password', 'password_confirm', 'first_name', 'last_name']
+        fields = ['username', 'email', 'password', 'password_confirm', 'first_name', 'last_name', 'region', 'district']
     
     def validate_email(self, value):
         # Email bo'lsa, to'g'ri formatda bo'lishi kerak

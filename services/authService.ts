@@ -11,7 +11,9 @@ function convertDjangoUser(djangoUser: any): User {
     totalRecycledKg: parseFloat(djangoUser.total_recycled_kg),
     level: djangoUser.level,
     joinDate: djangoUser.join_date,
-    role: djangoUser.role || 'user'
+    role: djangoUser.role || 'user',
+    region: djangoUser.region || undefined,
+    district: djangoUser.district || undefined,
   };
 }
 
@@ -85,7 +87,7 @@ export const AuthService = {
   },
 
   // Register new user - ism, familya, username, email va parol
-  register: async (username: string, password: string, first_name?: string, last_name?: string, email?: string): Promise<User> => {
+  register: async (username: string, password: string, first_name?: string, last_name?: string, email?: string, region?: string, district?: string): Promise<User> => {
     try {
       const requestBody: any = {
         username: username.trim(),
@@ -98,6 +100,14 @@ export const AuthService = {
       // Email qo'shish (agar berilgan bo'lsa)
       if (email && email.trim()) {
         requestBody.email = email.trim().toLowerCase();
+      }
+
+      // Viloyat va tuman qo'shish (agar berilgan bo'lsa)
+      if (region && region.trim()) {
+        requestBody.region = region.trim();
+      }
+      if (district && district.trim()) {
+        requestBody.district = district.trim();
       }
       
       // Email'ni umuman yubormaslik (backend avtomatik yaratadi)

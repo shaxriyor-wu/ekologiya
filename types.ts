@@ -13,6 +13,8 @@ export interface User {
   level: number;
   joinDate: string;
   role?: 'user' | 'admin';
+  region?: string;
+  district?: string;
 }
 
 export interface WasteAnalysisResult {

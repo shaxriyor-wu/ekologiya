@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Hexagon, ArrowRight, Lock, Mail, User as UserIcon } from 'lucide-react';
+import { Hexagon, ArrowRight, Lock, Mail, User as UserIcon, MapPin } from 'lucide-react';
 import { Language } from '../types';
 import { TRANSLATIONS } from '../constants';
 import { AuthService } from '../services/authService';
 import { ToastContainer, ToastType } from '../components/Toast';
 import { Confetti } from '../components/Confetti';
+import { UZBEKISTAN_REGIONS } from '../data/uzbekistanLocations';
 
 interface LoginProps {
   lang: Language;
@@ -17,7 +18,7 @@ export const Login: React.FC<LoginProps> = ({ lang, onLogin }) => {
   const navigate = useNavigate();
   
   const [isRegister, setIsRegister] = useState(true); // true = register, false = login
-  const [formData, setFormData] = useState({ username: '', email: '', password: '', first_name: '', last_name: '' });
+  const [formData, setFormData] = useState({ username: '', email: '', password: '', first_name: '', last_name: '', region: '', district: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [checkingAutoLogin, setCheckingAutoLogin] = useState(true);
@@ -99,7 +100,9 @@ export const Login: React.FC<LoginProps> = ({ lang, onLogin }) => {
               email: formData.email,
               password: '',
               first_name: '',
-              last_name: ''
+              last_name: '',
+              region: '',
+              district: ''
             });
             return;
           }
@@ -116,7 +119,9 @@ export const Login: React.FC<LoginProps> = ({ lang, onLogin }) => {
           formData.password,
           formData.first_name,
           formData.last_name,
-          formData.email
+          formData.email,
+          formData.region || undefined,
+          formData.district || undefined
         );
         
         // Save credentials for auto-login
@@ -277,6 +282,37 @@ export const Login: React.FC<LoginProps> = ({ lang, onLogin }) => {
               />
             </div>
 
+            <div className="relative group">
+              <MapPin className="absolute left-4 top-3.5 text-slate-500 group-focus-within:text-eco-400 transition-colors z-10" size={20} />
+              <select
+                className="w-full bg-slate-950/50 border border-slate-700 rounded-xl pl-12 pr-4 py-3.5 text-white focus:outline-none focus:border-eco-500 transition-colors appearance-none cursor-pointer"
+                value={formData.region}
+                onChange={e => setFormData({...formData, region: e.target.value, district: ''})}
+              >
+                <option value="" className="bg-slate-900 text-slate-400">Viloyat tanlang</option>
+                {UZBEKISTAN_REGIONS.map(r => (
+                  <option key={r.name} value={r.name} className="bg-slate-900 text-white">{r.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="relative group">
+              <MapPin className="absolute left-4 top-3.5 text-slate-500 group-focus-within:text-eco-400 transition-colors z-10" size={20} />
+              <select
+                className="w-full bg-slate-950/50 border border-slate-700 rounded-xl pl-12 pr-4 py-3.5 text-white focus:outline-none focus:border-eco-500 transition-colors appearance-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                value={formData.district}
+                disabled={!formData.region}
+                onChange={e => setFormData({...formData, district: e.target.value})}
+              >
+                <option value="" className="bg-slate-900 text-slate-400">
+                  {formData.region ? 'Tuman/Shahar tanlang' : 'Avval viloyat tanlang'}
+                </option>
+                {formData.region && UZBEKISTAN_REGIONS.find(r => r.name === formData.region)?.districts.map(d => (
+                  <option key={d} value={d} className="bg-slate-900 text-white">{d}</option>
+                ))}
+              </select>
+            </div>
+
             {error && <p className="text-red-400 text-sm text-center">{error}</p>}
 
             <button
@@ -352,7 +388,7 @@ export const Login: React.FC<LoginProps> = ({ lang, onLogin }) => {
             onClick={() => {
               setIsRegister(!isRegister);
               setError('');
-              setFormData({ username: '', email: '', password: '', first_name: '', last_name: '' }); // Reset form when switching
+              setFormData({ username: '', email: '', password: '', first_name: '', last_name: '', region: '', district: '' }); // Reset form when switching
             }}
             className="text-slate-400 hover:text-white text-sm font-medium transition-colors"
           >
