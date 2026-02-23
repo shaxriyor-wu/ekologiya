@@ -142,7 +142,12 @@ AUTH_USER_MODEL = 'api.User'
 
 # CORS Settings
 # Frontend URL from environment or defaults
-FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:3000')
+def _ensure_scheme(url):
+    if url and not url.startswith(('http://', 'https://')):
+        return f'https://{url}'
+    return url
+
+FRONTEND_URL = _ensure_scheme(config('FRONTEND_URL', default='http://localhost:3000'))
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
@@ -156,7 +161,7 @@ if FRONTEND_URL and FRONTEND_URL not in CORS_ALLOWED_ORIGINS:
     CORS_ALLOWED_ORIGINS.append(FRONTEND_URL)
 
 # Add Railway frontend domain if provided
-RAILWAY_FRONTEND_URL = config('RAILWAY_FRONTEND_URL', default='')
+RAILWAY_FRONTEND_URL = _ensure_scheme(config('RAILWAY_FRONTEND_URL', default=''))
 if RAILWAY_FRONTEND_URL:
     CORS_ALLOWED_ORIGINS.append(RAILWAY_FRONTEND_URL)
 
