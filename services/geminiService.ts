@@ -1,32 +1,31 @@
 import OpenAI from "openai";
 import { WasteAnalysisResult } from "../types";
 
-const createGroqClient = () => {
-  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
+const createOpenAIClient = () => {
+  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
   if (!apiKey) {
     return null;
   }
 
   return new OpenAI({
     apiKey,
-    baseURL: "https://api.groq.com/openai/v1",
     dangerouslyAllowBrowser: true,
   });
 };
 
 export const analyzeWasteImage = async (base64Image: string): Promise<WasteAnalysisResult> => {
-  const groq = createGroqClient();
+  const openai = createOpenAIClient();
 
-  if (!groq) {
-    throw new Error("Groq API kaliti sozlanmagan. Iltimos, administrator bilan bog'laning.");
+  if (!openai) {
+    throw new Error("OpenAI API kaliti sozlanmagan. Iltimos, administrator bilan bog'laning.");
   }
 
   try {
     const cleanBase64 = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
     const imageUrl = `data:image/jpeg;base64,${cleanBase64}`;
 
-    const response = await groq.chat.completions.create({
-      model: "meta-llama/llama-4-scout-17b-16e-instruct",
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "user",
@@ -79,7 +78,7 @@ Faqat JSON formatda javob ber:
 
     const content = response.choices[0]?.message?.content;
     if (!content) {
-      throw new Error("Groq javob bermadi");
+      throw new Error("OpenAI javob bermadi");
     }
 
     const parsed = JSON.parse(content);
@@ -95,13 +94,13 @@ Faqat JSON formatda javob ber:
     } as WasteAnalysisResult;
 
   } catch (error: any) {
-    console.error("Groq xatosi:", error);
+    console.error("OpenAI xatosi:", error);
 
     if (error?.status === 401) {
-      throw new Error("Groq API kaliti noto'g'ri yoki muddati tugagan");
+      throw new Error("OpenAI API kaliti noto'g'ri yoki muddati tugagan");
     }
     if (error?.status === 429) {
-      throw new Error("Groq so'rovlar limiti oshib ketdi. Keyinroq urinib ko'ring.");
+      throw new Error("OpenAI so'rovlar limiti oshib ketdi. Keyinroq urinib ko'ring.");
     }
 
     throw new Error(error?.message || "Rasm tahlilida xatolik yuz berdi");
