@@ -1,42 +1,32 @@
 import OpenAI from "openai";
 import { WasteAnalysisResult } from "../types";
 
-// OpenAI API kaliti - environment variable'dan olinadi
-const getOpenAIKey = (): string => {
-  const key = import.meta.env.VITE_OPENAI_API_KEY || import.meta.env.VITE_OPENAI_KEY;
-  if (!key) {
-    console.warn('[OpenAI] API key topilmadi. VITE_OPENAI_API_KEY environment variable sozlang.');
-  }
-  return key || '';
-};
-
-const createOpenAIClient = () => {
-  const apiKey = getOpenAIKey();
+const createGroqClient = () => {
+  const apiKey = import.meta.env.VITE_GROQ_API_KEY;
   if (!apiKey) {
     return null;
   }
-  
+
   return new OpenAI({
     apiKey,
+    baseURL: "https://api.groq.com/openai/v1",
     dangerouslyAllowBrowser: true,
   });
 };
 
 export const analyzeWasteImage = async (base64Image: string): Promise<WasteAnalysisResult> => {
-  const openai = createOpenAIClient();
-  
-  if (!openai) {
-    throw new Error("OpenAI API kaliti sozlanmagan. Iltimos, administrator bilan bog'laning.");
+  const groq = createGroqClient();
+
+  if (!groq) {
+    throw new Error("Groq API kaliti sozlanmagan. Iltimos, administrator bilan bog'laning.");
   }
 
   try {
-    // Base64 formatni tayyorlash
     const cleanBase64 = base64Image.includes(',') ? base64Image.split(',')[1] : base64Image;
     const imageUrl = `data:image/jpeg;base64,${cleanBase64}`;
 
-    // OpenAI GPT-4o-mini - arzon va tez vision model
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const response = await groq.chat.completions.create({
+      model: "meta-llama/llama-4-scout-17b-16e-instruct",
       messages: [
         {
           role: "user",
@@ -89,32 +79,31 @@ Faqat JSON formatda javob ber:
 
     const content = response.choices[0]?.message?.content;
     if (!content) {
-      throw new Error("OpenAI javob bermadi");
+      throw new Error("Groq javob bermadi");
     }
 
     const parsed = JSON.parse(content);
-    
-    // Qiymatni hisoblash: 1 kg = 5000 UZS
-    const calculatedValue = parsed.isRecyclable 
-      ? Math.ceil(parsed.weightEstimateKg * 5000) 
+
+    const calculatedValue = parsed.isRecyclable
+      ? Math.ceil(parsed.weightEstimateKg * 5000)
       : 0;
-    
-    return { 
-      ...parsed, 
+
+    return {
+      ...parsed,
       ecoValue: calculatedValue,
       isAuthentic: parsed.isAuthentic !== false
     } as WasteAnalysisResult;
 
   } catch (error: any) {
-    console.error("OpenAI xatosi:", error);
-    
+    console.error("Groq xatosi:", error);
+
     if (error?.status === 401) {
-      throw new Error("OpenAI API kaliti noto'g'ri yoki muddati tugagan");
+      throw new Error("Groq API kaliti noto'g'ri yoki muddati tugagan");
     }
     if (error?.status === 429) {
-      throw new Error("OpenAI so'rovlar limiti oshib ketdi. Keyinroq urinib ko'ring.");
+      throw new Error("Groq so'rovlar limiti oshib ketdi. Keyinroq urinib ko'ring.");
     }
-    
+
     throw new Error(error?.message || "Rasm tahlilida xatolik yuz berdi");
   }
 };
